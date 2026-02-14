@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
 :root {
   --bg: #f6f4ef;
   --surface: #fffdf7;
@@ -11,8 +13,124 @@
 
 * {
   box-sizing: border-box;
+  font-family: 'Space Grotesk', sans-serif;
 }
 
+html,
+body,
+#root {
+  margin: 0;
+  min-height: 100%;
+  background: linear-gradient(140deg, #f1ebe1, #f4efe7 36%, #f1f6f2);
+}
+
+/* ======================
+   Auth / Login Styles
+   ====================== */
+.auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.auth-card {
+  width: min(920px, 100%);
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  overflow: hidden;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+}
+
+.auth-hero {
+  padding: 2rem;
+  background: radial-gradient(circle at 12% 15%, #ffe4c8 0, transparent 44%),
+    radial-gradient(circle at 88% 78%, #d0f0e5 0, transparent 42%), var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.auth-hero h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+}
+
+.auth-hero p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.auth-form-wrap {
+  padding: 2rem;
+  display: grid;
+  align-content: center;
+  gap: 1rem;
+  background: var(--surface);
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.auth-tabs button {
+  border: 0;
+  background: #f8f2e8;
+  color: var(--ink);
+  padding: 0.65rem 0.7rem;
+  font-weight: 600;
+}
+
+.auth-tabs button.active {
+  background: linear-gradient(90deg, var(--accent), #6ca36b);
+  color: #fff;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.auth-form input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+  font: inherit;
+}
+
+.auth-message {
+  margin: 0;
+  color: #7a2f2a;
+  font-size: 0.86rem;
+}
+
+.auth-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.auth-form button {
+  border: none;
+  border-radius: 11px;
+  padding: 0.7rem 0.75rem;
+  color: #fff;
+  background: linear-gradient(90deg, var(--accent), #6ca36b);
+}
+
+/* ======================
+   Marketplace / Chat Styles
+   ====================== */
 .trade-app {
   max-width: 1240px;
   margin: 0 auto;
@@ -21,8 +139,8 @@
 }
 
 .hero {
-  background: radial-gradient(circle at 12% 15%, #dad7cd 0, transparent 44%),
-    radial-gradient(circle at 88% 78%, #538d22 0, transparent 42%), var(--surface);
+  background: radial-gradient(circle at 12% 15%, #ffe4c8 0, transparent 44%),
+    radial-gradient(circle at 88% 78%, #d0f0e5 0, transparent 42%), var(--surface);
   border: 1px solid var(--line);
   border-radius: 22px;
   padding: 1.8rem;
@@ -32,8 +150,7 @@
 .eyebrow {
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 0.78rem;
   color: var(--accent);
   margin: 0;
 }
@@ -150,7 +267,7 @@
   border-radius: 11px;
   padding: 0.58rem 0.72rem;
   color: #fff;
-  background: linear-gradient(90deg, var(--accent), #538d22);
+  background: linear-gradient(90deg, var(--accent), #6ca36b);
 }
 
 .chat {
@@ -282,7 +399,23 @@ button {
   cursor: pointer;
 }
 
+/* ======================
+   Responsive Styles
+   ====================== */
 @media (max-width: 1080px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-hero {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .auth-form-wrap {
+    padding: 1.2rem;
+  }
+
   .layout {
     grid-template-columns: 1fr;
   }
@@ -300,6 +433,11 @@ button {
 @media (max-width: 700px) {
   .trade-app {
     padding: 1rem 0.7rem 2rem;
+  }
+
+  .auth-hero,
+  .auth-form-wrap {
+    padding: 1rem;
   }
 
   .offer-row {

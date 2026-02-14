@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import './App.css'
 
-const currentUser = 'You'
-
 const tradeListings = [
   {
     id: 1,
@@ -22,7 +20,7 @@ const tradeListings = [
     location: 'Oakland',
     owner: 'Mina',
     wants: ['Portable speaker', 'Vinyl records'],
-    accent: '#a3b18a',
+    accent: '#73a942',
   },
   {
     id: 3,
@@ -42,7 +40,7 @@ const tradeListings = [
     location: 'San Jose',
     owner: 'Eli',
     wants: ['Ergonomic chair', 'Desk lamp'],
-    accent: '#a3b18a',
+    accent: '#73a942',
   },
   {
     id: 5,
@@ -64,7 +62,7 @@ const myInventory = [
   'Nintendo eShop $50 Card',
 ]
 
-const seededChats = [
+const getSeededChats = (currentUser) => [
   {
     id: 101,
     peer: 'Mina',
@@ -87,32 +85,102 @@ const seededChats = [
 ]
 
 function App() {
+  // --- AUTH STATES ---
+  const [isSignedIn, setIsSignedIn] = useState(false)
+  const [authMode, setAuthMode] = useState('signin')
+  const [accounts, setAccounts] = useState([
+    { name: 'Demo Trader', email: 'demo@tradeloop.com', password: 'demo1234' },
+  ])
+  const [authName, setAuthName] = useState('')
+  const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [userName, setUserName] = useState('You')
+
+  // --- MARKETPLACE STATES ---
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [listings] = useState(tradeListings)
-  const [chats, setChats] = useState(seededChats)
-  const [activeChatId, setActiveChatId] = useState(seededChats[0].id)
+  const [chats, setChats] = useState(getSeededChats('You'))
+  const [activeChatId, setActiveChatId] = useState(101)
   const [offerItem, setOfferItem] = useState(myInventory[0])
   const [offerMessage, setOfferMessage] = useState('')
   const [chatInput, setChatInput] = useState('')
 
   const categories = useMemo(
     () => ['All', ...new Set(listings.map((listing) => listing.category))],
-    [listings],
+    [listings]
   )
 
   const visibleListings = useMemo(() => {
-    if (categoryFilter === 'All') {
-      return listings
-    }
+    if (categoryFilter === 'All') return listings
     return listings.filter((listing) => listing.category === categoryFilter)
   }, [listings, categoryFilter])
 
   const activeChat = chats.find((chat) => chat.id === activeChatId)
   const activeListing = listings.find((listing) => listing.id === activeChat?.listingId)
 
+  // --- AUTH HANDLERS ---
+  const switchAuthMode = (mode) => {
+    setAuthMode(mode)
+    setAuthError('')
+  }
+
+  const handleSignIn = (event) => {
+    event.preventDefault()
+    const email = authEmail.trim().toLowerCase()
+    const account = accounts.find((item) => item.email.toLowerCase() === email)
+
+    if (!account || account.password !== authPassword) {
+      setAuthError('Invalid email or password.')
+      return
+    }
+
+    setUserName(account.name || 'You')
+    setChats(getSeededChats(account.name || 'You'))
+    setActiveChatId(101)
+    setAuthError('')
+    setIsSignedIn(true)
+  }
+
+  const handleCreateAccount = (event) => {
+    event.preventDefault()
+    const name = authName.trim()
+    const email = authEmail.trim().toLowerCase()
+
+    if (!name || !email || !authPassword) {
+      setAuthError('Please fill in all fields.')
+      return
+    }
+
+    if (authPassword.length < 6) {
+      setAuthError('Password must be at least 6 characters.')
+      return
+    }
+
+    if (authPassword !== confirmPassword) {
+      setAuthError('Passwords do not match.')
+      return
+    }
+
+    const exists = accounts.some((account) => account.email.toLowerCase() === email)
+    if (exists) {
+      setAuthError('An account with this email already exists.')
+      return
+    }
+
+    setAccounts((prev) => [...prev, { name, email, password: authPassword }])
+    setAuthMode('signin')
+    setAuthName('')
+    setAuthPassword('')
+    setConfirmPassword('')
+    setAuthError('Account created. Sign in to continue.')
+  }
+
+  // --- TRADE CHAT HANDLERS ---
   const startTradeChat = (listing) => {
     const existingChat = chats.find(
-      (chat) => chat.peer === listing.owner && chat.listingId === listing.id,
+      (chat) => chat.peer === listing.owner && chat.listingId === listing.id
     )
 
     if (existingChat) {
@@ -141,60 +209,151 @@ function App() {
 
   const sendTradeOffer = (event) => {
     event.preventDefault()
-    if (!activeChat || !offerMessage.trim()) {
-      return
-    }
+    if (!activeChat || !offerMessage.trim()) return
 
     const newMessage = {
       id: Date.now(),
-      from: currentUser,
+      from: userName,
       text: `Trade offer: ${offerItem}. Note: ${offerMessage.trim()}`,
       time: 'Now',
     }
 
     setChats((prev) =>
       prev.map((chat) =>
-        chat.id === activeChat.id
-          ? {
-              ...chat,
-              messages: [...chat.messages, newMessage],
-            }
-          : chat,
-      ),
+        chat.id === activeChat.id ? { ...chat, messages: [...chat.messages, newMessage] } : chat
+      )
     )
     setOfferMessage('')
   }
 
   const sendChatMessage = (event) => {
     event.preventDefault()
-    if (!activeChat || !chatInput.trim()) {
-      return
-    }
+    if (!activeChat || !chatInput.trim()) return
 
     const outgoing = {
       id: Date.now(),
-      from: currentUser,
+      from: userName,
       text: chatInput.trim(),
       time: 'Now',
     }
 
     setChats((prev) =>
       prev.map((chat) =>
-        chat.id === activeChat.id
-          ? {
-              ...chat,
-              messages: [...chat.messages, outgoing],
-            }
-          : chat,
-      ),
+        chat.id === activeChat.id ? { ...chat, messages: [...chat.messages, outgoing] } : chat
+      )
     )
     setChatInput('')
   }
 
+  // --- CONDITIONAL RENDER ---
+  if (!isSignedIn) {
+    return (
+      <div className="auth-wrap">
+        <section className="auth-card panel">
+          <div className="auth-hero">
+            <p className="eyebrow">TradeLoop Market</p>
+            <h1>{authMode === 'signin' ? 'Sign in to start trading' : 'Create your trader account'}</h1>
+            <p>
+              Connect with local traders, exchange products, and chat directly to negotiate the
+              perfect swap.
+            </p>
+          </div>
+
+          <div className="auth-form-wrap">
+            <div className="auth-tabs">
+              <button
+                type="button"
+                className={authMode === 'signin' ? 'active' : ''}
+                onClick={() => switchAuthMode('signin')}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                className={authMode === 'signup' ? 'active' : ''}
+                onClick={() => switchAuthMode('signup')}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {authMode === 'signin' ? (
+              <form className="auth-form" onSubmit={handleSignIn}>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    placeholder="you@email.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    type="password"
+                    placeholder="Enter password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                  />
+                </label>
+                {authError && <p className="auth-message">{authError}</p>}
+                <button type="submit">Enter Marketplace</button>
+                <p className="auth-hint">Demo account: demo@tradeloop.com / demo1234</p>
+              </form>
+            ) : (
+              <form className="auth-form" onSubmit={handleCreateAccount}>
+                <label>
+                  Full name
+                  <input
+                    type="text"
+                    placeholder="e.g. Alex Morgan"
+                    value={authName}
+                    onChange={(e) => setAuthName(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    placeholder="you@email.com"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    type="password"
+                    placeholder="At least 6 characters"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Confirm password
+                  <input
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                  />
+                </label>
+                {authError && <p className="auth-message">{authError}</p>}
+                <button type="submit">Create Account</button>
+              </form>
+            )}
+          </div>
+        </section>
+      </div>
+    )
+  }
+
+  // --- MARKETPLACE RENDER ---
   return (
     <div className="trade-app">
       <header className="hero">
-        <p className="eyebrow">Barter</p>
+        <p className="eyebrow">TradeLoop Market</p>
         <h1>Exchange products with people nearby</h1>
         <p>
           List what you have, show what you want, and negotiate directly through chat before
@@ -282,7 +441,7 @@ function App() {
                 <div className="messages">
                   {activeChat.messages.map((message) => (
                     <div
-                      className={`message ${message.from === currentUser ? 'mine' : ''}`}
+                      className={`message ${message.from === userName ? 'mine' : ''}`}
                       key={message.id}
                     >
                       <p>{message.text}</p>
@@ -296,7 +455,7 @@ function App() {
                 <form className="offer-form" onSubmit={sendTradeOffer}>
                   <h4>Send trade offer</h4>
                   <div className="offer-row">
-                    <select value={offerItem} onChange={(event) => setOfferItem(event.target.value)}>
+                    <select value={offerItem} onChange={(e) => setOfferItem(e.target.value)}>
                       {myInventory.map((item) => (
                         <option key={item} value={item}>
                           {item}
@@ -307,7 +466,7 @@ function App() {
                       type="text"
                       placeholder="Add a short trade note"
                       value={offerMessage}
-                      onChange={(event) => setOfferMessage(event.target.value)}
+                      onChange={(e) => setOfferMessage(e.target.value)}
                     />
                     <button type="submit">Offer</button>
                   </div>
@@ -318,7 +477,7 @@ function App() {
                     type="text"
                     placeholder="Write a message"
                     value={chatInput}
-                    onChange={(event) => setChatInput(event.target.value)}
+                    onChange={(e) => setChatInput(e.target.value)}
                   />
                   <button type="submit">Send</button>
                 </form>
