@@ -1,11 +1,37 @@
+import { useCallback, useEffect, useRef, useState } from 'react'
 import './MarketplacePage.css'
 
+const basePriceByTitle = {
+  'Nintendo Switch OLED': 280,
+  'Polaroid Now+': 140,
+  'Yamaha Acoustic Guitar': 190,
+  'Standing Desk Converter': 160,
+  'Air Fryer (5qt)': 95,
+}
+
+const conditionFactor = {
+  'Like New': 1,
+  Excellent: 0.95,
+  Great: 0.9,
+  Good: 0.8,
+  Used: 0.65,
+}
+
+const getApproxPrice = (listing) => {
+  const numericPrice = Number(listing.price)
+  if (Number.isFinite(numericPrice)) {
+    return numericPrice
+  }
+
+  const base = basePriceByTitle[listing.title] ?? 120
+  const factor = conditionFactor[listing.condition] ?? 0.8
+  return Math.round(base * factor)
+}
+
 function MarketplacePage({
-  categories,
-  categoryFilter,
-  setCategoryFilter,
   visibleListings,
-  startTradeChat,
+  onConsumeSwipe,
+  onSendInitialTradeOffer,
   chats,
   listings,
   activeChatId,
@@ -14,43 +40,188 @@ function MarketplacePage({
   activeListing,
   userName,
   myInventory,
-  offerItem,
-  setOfferItem,
-  offerMessage,
-  setOfferMessage,
-  sendTradeOffer,
   chatInput,
   setChatInput,
   sendChatMessage,
   onOpenProfile,
+  onOpenMembershipPlans,
   onOpenSwipe,
+  onOpenCreatePost,
   userPlan,
   swipesUsed,
   freeSwipeLimit,
 }) {
+  const [selectedListing, setSelectedListing] = useState(null)
+  const [initialOfferItem, setInitialOfferItem] = useState(myInventory[0] || '')
+  const [initialOfferMessage, setInitialOfferMessage] = useState('')
+  const [currentSwipeIndex, setCurrentSwipeIndex] = useState(0)
+  const [swipeStatusMessage, setSwipeStatusMessage] = useState(
+    'Swipe left or right to discover your next trade.',
+  )
+  const [showChoiceOverlay, setShowChoiceOverlay] = useState(false)
+  const [dragOffset, setDragOffset] = useState(0)
+  const dragStartXRef = useRef(null)
+  const wheelDeltaXRef = useRef(0)
+  const lastWheelSwipeAtRef = useRef(0)
+  const hasPostedItems = myInventory.length > 0
+  const swipeListings = visibleListings.length ? visibleListings : listings
+  const currentSwipeListing = swipeListings[currentSwipeIndex % Math.max(swipeListings.length, 1)]
+  const freeLimitReached = userPlan === 'free' && swipesUsed >= freeSwipeLimit
+
+  const openTradeOfferModal = (listing) => {
+    setSelectedListing(listing)
+    setInitialOfferItem(myInventory[0] || '')
+    setInitialOfferMessage('')
+  }
+
+  const closeTradeOfferModal = () => {
+    setSelectedListing(null)
+    setInitialOfferMessage('')
+  }
+
+  const submitInitialOffer = (event) => {
+    event.preventDefault()
+    if (!selectedListing || !initialOfferItem) {
+      return
+    }
+    onSendInitialTradeOffer({
+      listing: selectedListing,
+      item: initialOfferItem,
+      note: initialOfferMessage,
+    })
+    closeTradeOfferModal()
+  }
+
+  useEffect(() => {
+    if (!swipeListings.length) {
+      setCurrentSwipeIndex(0)
+      return
+    }
+    setCurrentSwipeIndex((prev) => prev % swipeListings.length)
+  }, [swipeListings])
+
+  const swipeLeft = useCallback(() => {
+    if (!currentSwipeListing) {
+      setSwipeStatusMessage('No listings available right now.')
+      return
+    }
+    if (freeLimitReached || showChoiceOverlay) {
+      setSwipeStatusMessage('Free plan limit reached: 10 swipes. Upgrade to Pro for unlimited swipes.')
+      return
+    }
+    onConsumeSwipe()
+    setCurrentSwipeIndex((prev) => prev + 1)
+    setSwipeStatusMessage('Skipped. Next listing loaded.')
+  }, [currentSwipeListing, freeLimitReached, onConsumeSwipe, showChoiceOverlay])
+
+  const swipeRight = useCallback(() => {
+    if (!currentSwipeListing) {
+      setSwipeStatusMessage('No listings available right now.')
+      return
+    }
+    if (freeLimitReached || showChoiceOverlay) {
+      setSwipeStatusMessage('Free plan limit reached: 10 swipes. Upgrade to Pro for unlimited swipes.')
+      return
+    }
+    onConsumeSwipe()
+    setShowChoiceOverlay(true)
+    setSwipeStatusMessage('Nice choice. Preparing your trade offer...')
+
+    window.setTimeout(() => {
+      setShowChoiceOverlay(false)
+      openTradeOfferModal(currentSwipeListing)
+      setCurrentSwipeIndex((prev) => prev + 1)
+    }, 560)
+  }, [currentSwipeListing, freeLimitReached, onConsumeSwipe, showChoiceOverlay])
+
+  useEffect(() => {
+    const onKeyDown = (event) => {
+      if (event.key === 'ArrowLeft') {
+        swipeLeft()
+      }
+      if (event.key === 'ArrowRight') {
+        swipeRight()
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [swipeLeft, swipeRight])
+
+  useEffect(() => {
+    const onWheel = (event) => {
+      if (Math.abs(event.deltaX) <= Math.abs(event.deltaY)) {
+        return
+      }
+      const now = Date.now()
+      if (now - lastWheelSwipeAtRef.current < 320) {
+        return
+      }
+      wheelDeltaXRef.current += event.deltaX
+      const threshold = 60
+      if (wheelDeltaXRef.current >= threshold) {
+        swipeRight()
+        wheelDeltaXRef.current = 0
+        lastWheelSwipeAtRef.current = now
+      } else if (wheelDeltaXRef.current <= -threshold) {
+        swipeLeft()
+        wheelDeltaXRef.current = 0
+        lastWheelSwipeAtRef.current = now
+      }
+    }
+
+    window.addEventListener('wheel', onWheel, { passive: true })
+    return () => window.removeEventListener('wheel', onWheel)
+  }, [swipeLeft, swipeRight])
+
+  const onPointerDownCard = (event) => {
+    if (freeLimitReached || showChoiceOverlay) {
+      return
+    }
+    dragStartXRef.current = event.clientX
+  }
+
+  const onPointerMoveCard = (event) => {
+    if (dragStartXRef.current === null) {
+      return
+    }
+    setDragOffset(event.clientX - dragStartXRef.current)
+  }
+
+  const onPointerUpCard = () => {
+    const threshold = 90
+    if (dragOffset >= threshold) {
+      swipeRight()
+    } else if (dragOffset <= -threshold) {
+      swipeLeft()
+    }
+    dragStartXRef.current = null
+    setDragOffset(0)
+  }
+
   return (
     <div className="trade-app">
       <header className="hero">
         <div className="hero-top">
           <p className="eyebrow">Barter</p>
           <div className="hero-actions">
-            <button className="swap-mode-button" type="button" onClick={onOpenSwipe}>
-              Swap Mode
-            </button>
-            {userPlan === 'free' ? (
-              <p className="swipe-counter">
-                {swipesUsed}/{freeSwipeLimit} swaps used
-              </p>
-            ) : (
-              <p className="swipe-counter pro">Pro: unlimited swaps</p>
-            )}
-            <button className="profile-button" type="button" onClick={onOpenProfile}>
-              <span className="profile-avatar" aria-hidden="true">
-                <svg viewBox="0 0 24 24" focusable="false">
-                  <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.87 0-7 2.01-7 4.5V20h14v-1.5c0-2.49-3.13-4.5-7-4.5z" />
-                </svg>
-              </span>
-            </button>
+            <div className="profile-row">
+              <div className="profile-links">
+                <button className="upgrade-link-button" type="button" onClick={onOpenMembershipPlans}>
+                  {userPlan === 'pro' ? 'View Plan' : '💎 Upgrade to Pro'}
+                </button>
+                <button className="upgrade-link-button boost-post-link" type="button" onClick={onOpenMembershipPlans}>
+                  ✨ Boost Post
+                </button>
+              </div>
+              <button className="profile-button" type="button" onClick={onOpenProfile}>
+                <span className="profile-avatar" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" focusable="false">
+                    <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.87 0-7 2.01-7 4.5V20h14v-1.5c0-2.49-3.13-4.5-7-4.5z" />
+                  </svg>
+                </span>
+              </button>
+            </div>
           </div>
         </div>
         <h1>Exchange products with people nearby</h1>
@@ -64,47 +235,84 @@ function MarketplacePage({
         <section className="marketplace panel">
           <div className="panel-header">
             <h2>Available Trades</h2>
-            <div className="filter-row">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  className={`chip ${categoryFilter === category ? 'active' : ''}`}
-                  onClick={() => setCategoryFilter(category)}
-                  type="button"
-                >
-                  {category}
-                </button>
-              ))}
+            <div className="market-top-actions">
+              <button className="swap-mode-button" type="button" onClick={onOpenSwipe}>
+                Swap Mode
+              </button>
+              {userPlan === 'free' ? (
+                <p className="swipe-counter">
+                  {swipesUsed}/{freeSwipeLimit} swaps used
+                </p>
+              ) : (
+                <p className="swipe-counter pro">Pro: unlimited swaps</p>
+              )}
             </div>
           </div>
 
-          <div className="listing-grid">
-            {visibleListings.map((listing) => (
-              <article className="listing-card" key={listing.id}>
-                <div className="listing-banner" style={{ backgroundColor: listing.accent }}>
-                  <span>{listing.category}</span>
-                </div>
-                <div className="listing-content">
-                  <h3>{listing.title}</h3>
-                  <p>
-                    <strong>Owner:</strong> {listing.owner}
-                  </p>
-                  <p>
-                    <strong>Condition:</strong> {listing.condition}
-                  </p>
-                  <p>
-                    <strong>Location:</strong> {listing.location}
-                  </p>
-                  <p>
-                    <strong>Wants:</strong> {listing.wants.join(', ')}
-                  </p>
-                  <button type="button" onClick={() => startTradeChat(listing)}>
-                    Start Chat for Trade
-                  </button>
-                </div>
-              </article>
-            ))}
+          <div className="market-swipe-shell">
+            <button
+              type="button"
+              className="market-swipe-action no"
+              onClick={swipeLeft}
+              disabled={freeLimitReached || showChoiceOverlay || !currentSwipeListing}
+              aria-label="Swipe left"
+            >
+              ✕
+            </button>
+
+            <section className="market-swipe-deck">
+              <div className="deck-layer layer-back" />
+              <div className="deck-layer layer-mid" />
+
+              {currentSwipeListing ? (
+                <article
+                  className="market-swipe-card"
+                  style={{ transform: `translateX(${dragOffset}px) rotate(${dragOffset * 0.02}deg)` }}
+                  onPointerDown={onPointerDownCard}
+                  onPointerMove={onPointerMoveCard}
+                  onPointerUp={onPointerUpCard}
+                  onPointerCancel={onPointerUpCard}
+                  onPointerLeave={onPointerUpCard}
+                >
+                  <div className="market-swipe-image">
+                    {currentSwipeListing.photo ? (
+                      <img src={currentSwipeListing.photo} alt={currentSwipeListing.title} />
+                    ) : (
+                      <div
+                        className="market-swipe-photo-fallback"
+                        style={{ backgroundColor: currentSwipeListing.accent || '#73a942' }}
+                      />
+                    )}
+                    <span>{currentSwipeListing.category}</span>
+                    <div className={`choice-overlay ${showChoiceOverlay ? 'show' : ''}`}>Nice choice</div>
+                  </div>
+                  <div className="market-swipe-info">
+                    <h3>{currentSwipeListing.title}</h3>
+                    <p>
+                      <strong>Price:</strong> $ {getApproxPrice(currentSwipeListing).toFixed(2)}
+                    </p>
+                    <p>
+                      <strong>Owner:</strong> {currentSwipeListing.owner}
+                    </p>
+                    <p>{currentSwipeListing.location}</p>
+                  </div>
+                </article>
+              ) : (
+                <div className="market-swipe-empty">No listings available right now.</div>
+              )}
+            </section>
+
+            <button
+              type="button"
+              className="market-swipe-action yes"
+              onClick={swipeRight}
+              disabled={freeLimitReached || showChoiceOverlay || !currentSwipeListing}
+              aria-label="Swipe right"
+            >
+              ✓
+            </button>
           </div>
+          <p className={`market-swipe-status ${freeLimitReached ? 'limit' : ''}`}>{swipeStatusMessage}</p>
         </section>
 
         <section className="chat panel">
@@ -138,35 +346,57 @@ function MarketplacePage({
                 </div>
 
                 <div className="messages">
-                  {activeChat.messages.map((message) => (
-                    <div className={`message ${message.from === userName ? 'mine' : ''}`} key={message.id}>
+                  {activeChat.messages.map((message) => {
+                    const firstIncomingListingCard =
+                      message.id === 1 && message.from !== userName && activeListing
+                        ? {
+                            id: activeListing.id,
+                            title: activeListing.title,
+                            category: activeListing.category,
+                            condition: activeListing.condition,
+                            location: activeListing.location,
+                            price: activeListing.price,
+                            photo: activeListing.photo,
+                            accent: activeListing.accent,
+                          }
+                        : null
+                    const messageOffer = message.tradeOffer ?? firstIncomingListingCard
+
+                    return (
+                      <div className={`message ${message.from === userName ? 'mine' : ''}`} key={message.id}>
                       <p>{message.text}</p>
+                      {messageOffer && (
+                        <article className="chat-offer-card">
+                          <div
+                            className="chat-offer-banner"
+                            style={{ backgroundColor: messageOffer.accent || '#73a942' }}
+                          >
+                            {messageOffer.photo ? (
+                              <img
+                                className="chat-offer-photo"
+                                src={messageOffer.photo}
+                                alt={messageOffer.title}
+                              />
+                            ) : (
+                              <div className="chat-offer-photo-fallback" aria-hidden="true" />
+                            )}
+                            <span>{messageOffer.category}</span>
+                          </div>
+                          <div className="chat-offer-content">
+                            <h4>{messageOffer.title}</h4>
+                            <p>Price: $ {getApproxPrice(messageOffer).toFixed(2)}</p>
+                            <p>Condition: {messageOffer.condition}</p>
+                            <p>Location: {messageOffer.location}</p>
+                          </div>
+                        </article>
+                      )}
                       <small>
                         {message.from} · {message.time}
                       </small>
                     </div>
-                  ))}
+                    )
+                  })}
                 </div>
-
-                <form className="offer-form" onSubmit={sendTradeOffer}>
-                  <h4>Send trade offer</h4>
-                  <div className="offer-row">
-                    <select value={offerItem} onChange={(event) => setOfferItem(event.target.value)}>
-                      {myInventory.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="Add a short trade note"
-                      value={offerMessage}
-                      onChange={(event) => setOfferMessage(event.target.value)}
-                    />
-                    <button type="submit">Offer</button>
-                  </div>
-                </form>
 
                 <form className="chat-input" onSubmit={sendChatMessage}>
                   <input
@@ -184,6 +414,62 @@ function MarketplacePage({
           </div>
         </section>
       </main>
+
+      {selectedListing && (
+        <div className="trade-offer-overlay" role="dialog" aria-modal="true" aria-label="Send trade offer">
+          <div className="trade-offer-modal">
+            <h3>Send Trade Offer</h3>
+            <p>
+              Send your offer for <strong>{selectedListing.title}</strong> first, then chat will open.
+            </p>
+
+            <form className="trade-offer-modal-form" onSubmit={submitInitialOffer}>
+              <label>
+                Your item
+                <select
+                  value={initialOfferItem}
+                  onChange={(event) => setInitialOfferItem(event.target.value)}
+                  disabled={!hasPostedItems}
+                >
+                  {hasPostedItems ? (
+                    myInventory.map((item) => (
+                      <option key={item} value={item}>
+                        {item}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="">No posted items yet</option>
+                  )}
+                </select>
+              </label>
+              {!hasPostedItems && (
+                <p className="offer-empty-note">Create a post first to send a trade offer.</p>
+              )}
+              <label>
+                Note
+                <input
+                  type="text"
+                  placeholder="Short trade note"
+                  value={initialOfferMessage}
+                  onChange={(event) => setInitialOfferMessage(event.target.value)}
+                />
+              </label>
+              <div className="trade-offer-actions">
+                <button type="button" className="secondary" onClick={closeTradeOfferModal}>
+                  Cancel
+                </button>
+                <button type="submit" disabled={!hasPostedItems}>
+                  Send Offer
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <button className="create-post-fab" type="button" onClick={onOpenCreatePost} aria-label="Create post">
+        +
+      </button>
     </div>
   )
 }

@@ -1,23 +1,30 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import './UserProfilePage.css'
+import PaymentDetailsModal from './PaymentDetailsModal'
 
 function UserProfilePage({
+  initialSection = 'about',
   userName,
   userEmail,
+  userLocation,
   chatsCount,
   activeTradesCount,
+  userPosts,
+  onDeletePost,
   onBackToMarketplace,
   onSaveProfile,
   currentPlan,
   onUpgradeToPro,
+  postsPaused,
+  onTogglePostVisibility,
   darkModeOn,
   onToggleDarkMode,
 }) {
-  const [activeSection, setActiveSection] = useState('about')
+  const [activeSection, setActiveSection] = useState(initialSection)
   const [isEditingAbout, setIsEditingAbout] = useState(false)
   const [draftName, setDraftName] = useState(userName)
   const [draftEmail, setDraftEmail] = useState(userEmail)
-  const [isPrivateProfile, setIsPrivateProfile] = useState(false)
+  const [draftLocation, setDraftLocation] = useState(userLocation)
   const [chatNotificationsOn, setChatNotificationsOn] = useState(true)
   const [locationSharingOn, setLocationSharingOn] = useState(true)
   const [securityNotice, setSecurityNotice] = useState('')
@@ -25,8 +32,12 @@ function UserProfilePage({
   const [planNotice, setPlanNotice] = useState('')
   const [compactCardsOn, setCompactCardsOn] = useState(false)
   const [autoTranslateOn, setAutoTranslateOn] = useState(false)
-  const [tradeRadius, setTradeRadius] = useState('10 mi')
+  const [tradeRadius, setTradeRadius] = useState('10')
+  const [priceRange, setPriceRange] = useState(250)
   const [preferredLanguage, setPreferredLanguage] = useState('English')
+  const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [paymentTarget, setPaymentTarget] = useState('pro')
+  const languageOptions = ['English', 'Spanish', 'French', 'Japanese']
 
   const sections = useMemo(
     () => [
@@ -37,6 +48,7 @@ function UserProfilePage({
         content: [
           `Name: ${userName}`,
           `Email: ${userEmail}`,
+          `Location: ${userLocation}`,
           `Open chats: ${chatsCount}`,
           `Active listings: ${activeTradesCount}`,
         ],
@@ -59,30 +71,46 @@ function UserProfilePage({
         title: 'Membership Plans',
         content: [],
       },
+      {
+        id: 'manage-posts',
+        label: 'Manage Posts',
+        title: 'Your Created Posts',
+        content: [],
+      },
     ],
-    [activeTradesCount, chatsCount, userEmail, userName],
+    [activeTradesCount, chatsCount, userEmail, userLocation, userName],
   )
 
   const currentSection = sections.find((section) => section.id === activeSection) ?? sections[0]
 
+  useEffect(() => {
+    setActiveSection(initialSection)
+  }, [initialSection])
+
   const startEditAbout = () => {
     setDraftName(userName)
     setDraftEmail(userEmail)
+    setDraftLocation(userLocation)
     setIsEditingAbout(true)
   }
 
   const cancelEditAbout = () => {
     setDraftName(userName)
     setDraftEmail(userEmail)
+    setDraftLocation(userLocation)
     setIsEditingAbout(false)
   }
 
   const saveAbout = () => {
     const name = draftName.trim() || userName
     const email = draftEmail.trim() || userEmail
-    onSaveProfile({ name, email })
+    const location = draftLocation.trim() || userLocation
+    onSaveProfile({ name, email, location })
     setIsEditingAbout(false)
   }
+
+  const mapLocation = (isEditingAbout ? draftLocation : userLocation).trim() || 'San Francisco, CA'
+  const mapSrc = `https://www.google.com/maps?q=${encodeURIComponent(mapLocation)}&output=embed`
 
   const handlePasswordReset = () => {
     setSecurityNotice('Password reset link sent to your email.')
@@ -97,20 +125,37 @@ function UserProfilePage({
     setPreferencesNotice(`Dark mode ${darkModeOn ? 'disabled' : 'enabled'}.`)
   }
 
-  const cycleTradeRadius = () => {
-    const options = ['5 mi', '10 mi', '25 mi', '50 mi']
-    const index = options.indexOf(tradeRadius)
-    const next = options[(index + 1) % options.length]
-    setTradeRadius(next)
-    setPreferencesNotice(`Trade radius set to ${next}.`)
+  const togglePostVisibility = () => {
+    onTogglePostVisibility()
+    setSecurityNotice(postsPaused ? 'Posts are now visible in marketplace.' : 'Posts are now paused.')
   }
 
-  const cycleLanguage = () => {
-    const options = ['English', 'Spanish', 'French', 'Japanese']
-    const index = options.indexOf(preferredLanguage)
-    const next = options[(index + 1) % options.length]
+  const handleTradeRadiusChange = (event) => {
+    const value = event.target.value.replace(/[^\d]/g, '')
+    setTradeRadius(value)
+    if (value) {
+      setPreferencesNotice(`Trade radius set to ${value} miles.`)
+    }
+  }
+
+  const handlePriceRangeChange = (event) => {
+    const value = Number(event.target.value)
+    setPriceRange(value)
+    setPreferencesNotice(`Max preferred price set to $${value}.`)
+  }
+
+  const handleLanguageChange = (event) => {
+    const next = event.target.value
     setPreferredLanguage(next)
     setPreferencesNotice(`Preferred language set to ${next}.`)
+  }
+
+  const handleLocationChange = (event) => {
+    const value = event.target.value
+    setDraftLocation(value)
+    if (!isEditingAbout) {
+      onSaveProfile({ name: userName, email: userEmail, location: value.trim() || userLocation })
+    }
   }
 
   const toggleCompactCards = () => {
@@ -121,6 +166,26 @@ function UserProfilePage({
   const toggleAutoTranslate = () => {
     setAutoTranslateOn((prev) => !prev)
     setPreferencesNotice(`Auto-translate ${autoTranslateOn ? 'disabled' : 'enabled'}.`)
+  }
+
+  const openPaymentModal = () => {
+    if (currentPlan === 'pro') {
+      setPlanNotice('You are already on Pro plan.')
+      return
+    }
+    setPaymentTarget('pro')
+    setShowPaymentModal(true)
+  }
+
+  const confirmPaymentAndUpgrade = () => {
+    if (paymentTarget === 'boost') {
+      setShowPaymentModal(false)
+      setPlanNotice('Boost activated for 2 hours. Your posts will appear more often.')
+      return
+    }
+    onUpgradeToPro()
+    setShowPaymentModal(false)
+    setPlanNotice('Pro plan activated. You now have unlimited swipes.')
   }
 
   return (
@@ -173,6 +238,23 @@ function UserProfilePage({
                     disabled={!isEditingAbout}
                   />
                 </label>
+                <label>
+                  Location
+                  <input
+                    type="text"
+                    placeholder="Type area, city, or address"
+                    value={draftLocation}
+                    onChange={handleLocationChange}
+                  />
+                </label>
+                <div className="about-map">
+                  <iframe
+                    title="Selected area map"
+                    src={mapSrc}
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                  />
+                </div>
                 <p className="about-meta">
                   Open chats: {chatsCount} · Active listings: {activeTradesCount}
                 </p>
@@ -197,11 +279,11 @@ function UserProfilePage({
               <div className="settings-panel">
                 <div className="settings-row">
                   <div>
-                    <h3>Privacy</h3>
-                    <p>Control whether your profile is visible to other traders.</p>
+                    <h3>Post Visibility</h3>
+                    <p>Pause to hide your posts from marketplace until you unpause.</p>
                   </div>
-                  <button type="button" onClick={() => setIsPrivateProfile((prev) => !prev)}>
-                    {isPrivateProfile ? 'Private' : 'Public'}
+                  <button type="button" onClick={togglePostVisibility}>
+                    {postsPaused ? 'Unpause' : 'Pause'}
                   </button>
                 </div>
 
@@ -225,6 +307,50 @@ function UserProfilePage({
                   </button>
                 </div>
 
+                <div className="settings-row">
+                  <div>
+                    <h3>Dark Mode</h3>
+                    <p>Switch between light and dark interface themes.</p>
+                  </div>
+                  <button type="button" onClick={toggleDarkMode}>
+                    {darkModeOn ? 'On' : 'Off'}
+                  </button>
+                </div>
+
+                <div className="settings-row">
+                  <div>
+                    <h3>Language</h3>
+                    <p>Set your preferred language for marketplace text.</p>
+                  </div>
+                  <select value={preferredLanguage} onChange={handleLanguageChange}>
+                    {languageOptions.map((language) => (
+                      <option key={language} value={language}>
+                        {language}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="settings-row">
+                  <div>
+                    <h3>Compact Listing Cards</h3>
+                    <p>Use denser listing cards to view more products at once.</p>
+                  </div>
+                  <button type="button" onClick={toggleCompactCards}>
+                    {compactCardsOn ? 'On' : 'Off'}
+                  </button>
+                </div>
+
+                <div className="settings-row">
+                  <div>
+                    <h3>Auto-Translate Chats</h3>
+                    <p>Automatically translate incoming chat messages.</p>
+                  </div>
+                  <button type="button" onClick={toggleAutoTranslate}>
+                    {autoTranslateOn ? 'On' : 'Off'}
+                  </button>
+                </div>
+
                 <div className="settings-actions">
                   <button type="button" onClick={handlePasswordReset}>
                     Reset Password
@@ -235,101 +361,124 @@ function UserProfilePage({
                 </div>
 
                 {securityNotice && <p className="settings-notice">{securityNotice}</p>}
+                {preferencesNotice && <p className="settings-notice">{preferencesNotice}</p>}
               </div>
             ) : activeSection === 'preferences' ? (
               <div className="settings-panel">
                 <div className="settings-row">
                   <div>
-                    <h3>Dark Mode</h3>
-                    <p>Switch between light and dark interface themes.</p>
-                  </div>
-                  <button type="button" onClick={toggleDarkMode}>
-                    {darkModeOn ? 'On' : 'Off'}
-                  </button>
-                </div>
-                <div className="settings-row">
-                  <div>
                     <h3>Trade Radius</h3>
                     <p>Limit discovery to a distance that works for you.</p>
                   </div>
-                  <button type="button" onClick={cycleTradeRadius}>
-                    {tradeRadius}
-                  </button>
+                  <label className="radius-input-wrap">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="Enter miles"
+                      value={tradeRadius}
+                      onChange={handleTradeRadiusChange}
+                    />
+                    <span>miles</span>
+                  </label>
                 </div>
                 <div className="settings-row">
                   <div>
-                    <h3>Language</h3>
-                    <p>Set your preferred language for marketplace text.</p>
+                    <h3>Price Range</h3>
+                    <p>Set the max product value you want to see first.</p>
                   </div>
-                  <button type="button" onClick={cycleLanguage}>
-                    {preferredLanguage}
-                  </button>
-                </div>
-                <div className="settings-row">
-                  <div>
-                    <h3>Compact Listing Cards</h3>
-                    <p>Use denser listing cards to view more products at once.</p>
+                  <div className="price-range-wrap">
+                    <input
+                      type="range"
+                      min="20"
+                      max="1000"
+                      step="5"
+                      value={priceRange}
+                      onChange={handlePriceRangeChange}
+                    />
+                    <span>${priceRange}</span>
                   </div>
-                  <button type="button" onClick={toggleCompactCards}>
-                    {compactCardsOn ? 'On' : 'Off'}
-                  </button>
-                </div>
-                <div className="settings-row">
-                  <div>
-                    <h3>Auto-Translate Chats</h3>
-                    <p>Automatically translate incoming chat messages.</p>
-                  </div>
-                  <button type="button" onClick={toggleAutoTranslate}>
-                    {autoTranslateOn ? 'On' : 'Off'}
-                  </button>
                 </div>
                 {preferencesNotice && <p className="settings-notice">{preferencesNotice}</p>}
               </div>
             ) : activeSection === 'plans' ? (
-              <div className="plans-grid">
-                <article className={`plan-card ${currentPlan === 'free' ? 'current' : ''}`}>
-                  <div className="plan-head">
-                    <h3>Free</h3>
-                    {currentPlan === 'free' && <span>Current Plan</span>}
-                  </div>
-                  <ul>
-                    <li>Basic product listings</li>
-                    <li>User-to-user chat access</li>
-                    <li>Local trade discovery</li>
-                    <li>Standard profile controls</li>
-                  </ul>
-                </article>
+              <>
+                <div className="plans-grid">
+                  <article className={`plan-card ${currentPlan === 'free' ? 'current' : ''}`}>
+                    <div className="plan-head">
+                      <h3>Free</h3>
+                      {currentPlan === 'free' && <span>Current Plan</span>}
+                    </div>
+                    <ul>
+                      <li>Basic product listings</li>
+                      <li>User-to-user chat access</li>
+                      <li>Local trade discovery</li>
+                      <li>Standard profile controls</li>
+                    </ul>
+                  </article>
 
-                <button
-                  type="button"
-                  className={`plan-card plan-card-pro ${currentPlan === 'pro' ? 'current' : ''}`}
-                  onClick={() => {
-                    if (currentPlan === 'pro') {
-                      setPlanNotice('You are already on Pro plan.')
-                      return
-                    }
-                    onUpgradeToPro()
-                    setPlanNotice('Pro plan activated. You now have unlimited swipes.')
-                  }}
-                >
+                  <article className={`plan-card plan-card-pro ${currentPlan === 'pro' ? 'current' : ''}`}>
+                    <div className="plan-head">
+                      <h3>
+                        💎 Pro <span className="plan-price">$17.89/mo</span>
+                      </h3>
+                      {currentPlan === 'pro' && <span>Current Plan</span>}
+                    </div>
+                    <ul>
+                      <li>Everything in Free</li>
+                      <li>Priority listing visibility</li>
+                      <li>Advanced filter and match tools</li>
+                      <li>Pro badge on profile</li>
+                    </ul>
+                    <button type="button" className="plan-buy-now" onClick={openPaymentModal}>
+                      Buy Now
+                    </button>
+                  </article>
+                </div>
+                <section className="boost-plan-card">
                   <div className="plan-head">
-                    <h3>
-                      Pro{' '}
-                      <span className="plan-crown" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" focusable="false">
-                          <path d="M3 18h18l-1.6-8.3-4.5 3.2L12 5l-2.9 7.9-4.5-3.2L3 18zm1.8 2h14.4v1.5H4.8V20z" />
-                        </svg>
-                      </span>
-                    </h3>
-                    {currentPlan === 'pro' && <span>Current Plan</span>}
+                    <h3>✨ Boost</h3>
+                    <span>$0.99 / 2 hr</span>
                   </div>
-                  <ul>
-                    <li>Everything in Free</li>
-                    <li>Priority listing visibility</li>
-                    <li>Advanced filter and match tools</li>
-                    <li>Pro badge on profile</li>
+                  <p className="boost-plan-copy">
+                    This will show your posts more often on other users&apos; feeds.
+                  </p>
+                  <button
+                    type="button"
+                    className="boost-buy-button"
+                    onClick={() => {
+                      setPaymentTarget('boost')
+                      setShowPaymentModal(true)
+                    }}
+                  >
+                    Boost Now
+                  </button>
+                </section>
+              </>
+            ) : activeSection === 'manage-posts' ? (
+              <div className="manage-posts-panel">
+                {userPosts.length ? (
+                  <ul className="manage-post-list">
+                    {userPosts.map((post) => (
+                      <li key={post.id} className="manage-post-item">
+                        <div className="manage-post-copy">
+                          <h3>{post.title}</h3>
+                          <p>
+                            {post.category} · {post.condition} · {post.location}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          className="delete-post-button"
+                          onClick={() => onDeletePost(post.id)}
+                        >
+                          Delete
+                        </button>
+                      </li>
+                    ))}
                   </ul>
-                </button>
+                ) : (
+                  <p className="settings-notice">You have not created any posts yet.</p>
+                )}
               </div>
             ) : (
               <ul>
@@ -342,6 +491,15 @@ function UserProfilePage({
           </article>
         </div>
       </section>
+      <PaymentDetailsModal
+        open={showPaymentModal}
+        title={paymentTarget === 'boost' ? 'Boost Payment Details' : 'Payment Details'}
+        planLabel={paymentTarget === 'boost' ? 'Boost Plan' : 'Pro Plan'}
+        planPrice={paymentTarget === 'boost' ? '$0.99 / 2 hr' : '$17.89/mo'}
+        submitLabel={paymentTarget === 'boost' ? 'Pay and Boost' : 'Pay and Upgrade'}
+        onClose={() => setShowPaymentModal(false)}
+        onConfirm={confirmPaymentAndUpgrade}
+      />
     </div>
   )
 }

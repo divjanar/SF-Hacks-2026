@@ -9,6 +9,8 @@ function AuthPage({
   setAuthName,
   authEmail,
   setAuthEmail,
+  authLocation,
+  setAuthLocation,
   authPassword,
   setAuthPassword,
   confirmPassword,
@@ -87,6 +89,15 @@ function AuthPage({
                   placeholder="you@email.com"
                   value={authEmail}
                   onChange={(event) => setAuthEmail(event.target.value)}
+                />
+              </label>
+              <label>
+                Location
+                <input
+                  type="text"
+                  placeholder="e.g. San Francisco, CA"
+                  value={authLocation}
+                  onChange={(event) => setAuthLocation(event.target.value)}
                 />
               </label>
               <label>
