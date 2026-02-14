@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react'
 import AuthPage from './AuthPage'
 import MarketplacePage from './MarketplacePage'
 import UserProfilePage from './UserProfilePage'
+import SwipePage from './SwipePage'
+import OwnerProductPage from './OwnerProductPage'
 
 const tradeListings = [
   {
@@ -92,6 +94,7 @@ const getNextMessageId = (messageList) =>
   messageList.reduce((max, message) => Math.max(max, message.id), 0) + 1
 
 function App() {
+  const freeSwipeLimit = 10
   const [darkModeOn, setDarkModeOn] = useState(() => localStorage.getItem('darkMode') === 'on')
   const [isSignedIn, setIsSignedIn] = useState(false)
   const [authMode, setAuthMode] = useState('signin')
@@ -105,7 +108,10 @@ function App() {
   const [authError, setAuthError] = useState('')
   const [userName, setUserName] = useState('You')
   const [userEmail, setUserEmail] = useState('demo@tradeloop.com')
+  const [userPlan, setUserPlan] = useState('free')
   const [activePage, setActivePage] = useState('marketplace')
+  const [swipesUsed, setSwipesUsed] = useState(0)
+  const [selectedSwipeProduct, setSelectedSwipeProduct] = useState(null)
 
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [listings] = useState(tradeListings)
@@ -278,6 +284,15 @@ function App() {
     setActivePage('profile')
   }
 
+  const openSwipePage = () => {
+    setActivePage('swipe')
+  }
+
+  const openOwnerProductPage = (product) => {
+    setSelectedSwipeProduct(product)
+    setActivePage('owner-product')
+  }
+
   const backToMarketplace = () => {
     setActivePage('marketplace')
   }
@@ -285,6 +300,10 @@ function App() {
   const saveUserProfile = ({ name, email }) => {
     setUserName(name)
     setUserEmail(email)
+  }
+
+  const upgradeToPro = () => {
+    setUserPlan('pro')
   }
 
   if (!isSignedIn) {
@@ -316,8 +335,33 @@ function App() {
         activeTradesCount={listings.length}
         onBackToMarketplace={backToMarketplace}
         onSaveProfile={saveUserProfile}
+        currentPlan={userPlan}
+        onUpgradeToPro={upgradeToPro}
         darkModeOn={darkModeOn}
         onToggleDarkMode={() => setDarkModeOn((prev) => !prev)}
+      />
+    )
+  }
+
+  if (activePage === 'swipe') {
+    return (
+      <SwipePage
+        userPlan={userPlan}
+        swipesUsed={swipesUsed}
+        freeSwipeLimit={freeSwipeLimit}
+        onConsumeSwipe={() => setSwipesUsed((prev) => prev + 1)}
+        onBackToMarketplace={backToMarketplace}
+        onSelectProduct={openOwnerProductPage}
+      />
+    )
+  }
+
+  if (activePage === 'owner-product') {
+    return (
+      <OwnerProductPage
+        product={selectedSwipeProduct}
+        onBackToSwipe={openSwipePage}
+        onBackToMarketplace={backToMarketplace}
       />
     )
   }
@@ -346,6 +390,10 @@ function App() {
       setChatInput={setChatInput}
       sendChatMessage={sendChatMessage}
       onOpenProfile={openUserProfile}
+      onOpenSwipe={openSwipePage}
+      userPlan={userPlan}
+      swipesUsed={swipesUsed}
+      freeSwipeLimit={freeSwipeLimit}
     />
   )
 }
