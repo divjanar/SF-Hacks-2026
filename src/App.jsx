@@ -86,8 +86,15 @@ const getSeededChats = (currentUser) => [
 
 function App() {
   const [isSignedIn, setIsSignedIn] = useState(false)
+  const [authMode, setAuthMode] = useState('signin')
+  const [accounts, setAccounts] = useState([
+    { name: 'Demo Trader', email: 'demo@tradeloop.com', password: 'demo1234' },
+  ])
   const [authName, setAuthName] = useState('')
   const [authEmail, setAuthEmail] = useState('')
+  const [authPassword, setAuthPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [authError, setAuthError] = useState('')
   const [userName, setUserName] = useState('You')
 
   const [categoryFilter, setCategoryFilter] = useState('All')
@@ -113,14 +120,60 @@ function App() {
   const activeChat = chats.find((chat) => chat.id === activeChatId)
   const activeListing = listings.find((listing) => listing.id === activeChat?.listingId)
 
+  const switchAuthMode = (mode) => {
+    setAuthMode(mode)
+    setAuthError('')
+  }
+
   const handleSignIn = (event) => {
     event.preventDefault()
-    const trimmedName = authName.trim()
-    const nextName = trimmedName || 'You'
-    setUserName(nextName)
-    setChats(getSeededChats(nextName))
+    const email = authEmail.trim().toLowerCase()
+    const account = accounts.find((item) => item.email.toLowerCase() === email)
+
+    if (!account || account.password !== authPassword) {
+      setAuthError('Invalid email or password.')
+      return
+    }
+
+    setUserName(account.name || 'You')
+    setChats(getSeededChats(account.name || 'You'))
     setActiveChatId(101)
+    setAuthError('')
     setIsSignedIn(true)
+  }
+
+  const handleCreateAccount = (event) => {
+    event.preventDefault()
+    const name = authName.trim()
+    const email = authEmail.trim().toLowerCase()
+
+    if (!name || !email || !authPassword) {
+      setAuthError('Please fill in all fields.')
+      return
+    }
+
+    if (authPassword.length < 6) {
+      setAuthError('Password must be at least 6 characters.')
+      return
+    }
+
+    if (authPassword !== confirmPassword) {
+      setAuthError('Passwords do not match.')
+      return
+    }
+
+    const exists = accounts.some((account) => account.email.toLowerCase() === email)
+    if (exists) {
+      setAuthError('An account with this email already exists.')
+      return
+    }
+
+    setAccounts((prev) => [...prev, { name, email, password: authPassword }])
+    setAuthMode('signin')
+    setAuthName('')
+    setAuthPassword('')
+    setConfirmPassword('')
+    setAuthError('Account created. Sign in to continue.')
   }
 
   const startTradeChat = (listing) => {
@@ -210,34 +263,98 @@ function App() {
         <section className="auth-card panel">
           <div className="auth-hero">
             <p className="eyebrow">TradeLoop Market</p>
-            <h1>Sign in to start trading</h1>
+            <h1>{authMode === 'signin' ? 'Sign in to start trading' : 'Create your trader account'}</h1>
             <p>
               Connect with local traders, exchange products, and chat directly to negotiate the
               perfect swap.
             </p>
           </div>
 
-          <form className="auth-form" onSubmit={handleSignIn}>
-            <label>
-              Full name
-              <input
-                type="text"
-                placeholder="e.g. Alex Morgan"
-                value={authName}
-                onChange={(event) => setAuthName(event.target.value)}
-              />
-            </label>
-            <label>
-              Email
-              <input
-                type="email"
-                placeholder="you@email.com"
-                value={authEmail}
-                onChange={(event) => setAuthEmail(event.target.value)}
-              />
-            </label>
-            <button type="submit">Enter Marketplace</button>
-          </form>
+          <div className="auth-form-wrap">
+            <div className="auth-tabs">
+              <button
+                type="button"
+                className={authMode === 'signin' ? 'active' : ''}
+                onClick={() => switchAuthMode('signin')}
+              >
+                Sign In
+              </button>
+              <button
+                type="button"
+                className={authMode === 'signup' ? 'active' : ''}
+                onClick={() => switchAuthMode('signup')}
+              >
+                Create Account
+              </button>
+            </div>
+
+            {authMode === 'signin' ? (
+              <form className="auth-form" onSubmit={handleSignIn}>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    placeholder="you@email.com"
+                    value={authEmail}
+                    onChange={(event) => setAuthEmail(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    type="password"
+                    placeholder="Enter password"
+                    value={authPassword}
+                    onChange={(event) => setAuthPassword(event.target.value)}
+                  />
+                </label>
+                {authError && <p className="auth-message">{authError}</p>}
+                <button type="submit">Enter Marketplace</button>
+                <p className="auth-hint">Demo account: demo@tradeloop.com / demo1234</p>
+              </form>
+            ) : (
+              <form className="auth-form" onSubmit={handleCreateAccount}>
+                <label>
+                  Full name
+                  <input
+                    type="text"
+                    placeholder="e.g. Alex Morgan"
+                    value={authName}
+                    onChange={(event) => setAuthName(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Email
+                  <input
+                    type="email"
+                    placeholder="you@email.com"
+                    value={authEmail}
+                    onChange={(event) => setAuthEmail(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Password
+                  <input
+                    type="password"
+                    placeholder="At least 6 characters"
+                    value={authPassword}
+                    onChange={(event) => setAuthPassword(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Confirm password
+                  <input
+                    type="password"
+                    placeholder="Re-enter password"
+                    value={confirmPassword}
+                    onChange={(event) => setConfirmPassword(event.target.value)}
+                  />
+                </label>
+                {authError && <p className="auth-message">{authError}</p>}
+                <button type="submit">Create Account</button>
+              </form>
+            )}
+          </div>
         </section>
       </div>
     )

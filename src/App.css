@@ -44,12 +44,38 @@
   color: var(--muted);
 }
 
-.auth-form {
+.auth-form-wrap {
   padding: 2rem;
   display: grid;
   align-content: center;
-  gap: 0.9rem;
+  gap: 1rem;
   background: var(--surface);
+}
+
+.auth-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.auth-tabs button {
+  border: 0;
+  background: #f8f2e8;
+  color: var(--ink);
+  padding: 0.65rem 0.7rem;
+  font-weight: 600;
+}
+
+.auth-tabs button.active {
+  background: linear-gradient(90deg, var(--accent), #6ca36b);
+  color: #fff;
+}
+
+.auth-form {
+  display: grid;
+  gap: 0.9rem;
 }
 
 .auth-form label {
@@ -64,6 +90,18 @@
   border-radius: 10px;
   padding: 0.65rem 0.7rem;
   font: inherit;
+}
+
+.auth-message {
+  margin: 0;
+  color: #7a2f2a;
+  font-size: 0.86rem;
+}
+
+.auth-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.82rem;
 }
 
 .auth-form button {
@@ -352,6 +390,10 @@ button {
     border-bottom: 1px solid var(--line);
   }
 
+  .auth-form-wrap {
+    padding: 1.2rem;
+  }
+
   .layout {
     grid-template-columns: 1fr;
   }
@@ -372,8 +414,8 @@ button {
   }
 
   .auth-hero,
-  .auth-form {
-    padding: 1.2rem;
+  .auth-form-wrap {
+    padding: 1rem;
   }
 
   .offer-row {
