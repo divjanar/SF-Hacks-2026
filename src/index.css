@@ -1,5 +1,16 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
+:root {
+  --bg: #f6f4ef;
+  --surface: #fffdf7;
+  --ink: #1f1b18;
+  --muted: #6e655e;
+  --line: #e8ddd0;
+  --accent: #588157;
+  --accent-2: #2f7f73;
+  --shadow: 0 14px 30px rgba(39, 23, 13, 0.09);
+}
+
 * {
   box-sizing: border-box;
 }
