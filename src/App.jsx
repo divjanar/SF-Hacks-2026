@@ -1,8 +1,6 @@
 import { useMemo, useState } from 'react'
 import './App.css'
 
-const currentUser = 'You'
-
 const tradeListings = [
   {
     id: 1,
@@ -64,7 +62,7 @@ const myInventory = [
   'Nintendo eShop $50 Card',
 ]
 
-const seededChats = [
+const getSeededChats = (currentUser) => [
   {
     id: 101,
     peer: 'Mina',
@@ -87,10 +85,15 @@ const seededChats = [
 ]
 
 function App() {
+  const [isSignedIn, setIsSignedIn] = useState(false)
+  const [authName, setAuthName] = useState('')
+  const [authEmail, setAuthEmail] = useState('')
+  const [userName, setUserName] = useState('You')
+
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [listings] = useState(tradeListings)
-  const [chats, setChats] = useState(seededChats)
-  const [activeChatId, setActiveChatId] = useState(seededChats[0].id)
+  const [chats, setChats] = useState(getSeededChats('You'))
+  const [activeChatId, setActiveChatId] = useState(101)
   const [offerItem, setOfferItem] = useState(myInventory[0])
   const [offerMessage, setOfferMessage] = useState('')
   const [chatInput, setChatInput] = useState('')
@@ -109,6 +112,16 @@ function App() {
 
   const activeChat = chats.find((chat) => chat.id === activeChatId)
   const activeListing = listings.find((listing) => listing.id === activeChat?.listingId)
+
+  const handleSignIn = (event) => {
+    event.preventDefault()
+    const trimmedName = authName.trim()
+    const nextName = trimmedName || 'You'
+    setUserName(nextName)
+    setChats(getSeededChats(nextName))
+    setActiveChatId(101)
+    setIsSignedIn(true)
+  }
 
   const startTradeChat = (listing) => {
     const existingChat = chats.find(
@@ -147,7 +160,7 @@ function App() {
 
     const newMessage = {
       id: Date.now(),
-      from: currentUser,
+      from: userName,
       text: `Trade offer: ${offerItem}. Note: ${offerMessage.trim()}`,
       time: 'Now',
     }
@@ -173,7 +186,7 @@ function App() {
 
     const outgoing = {
       id: Date.now(),
-      from: currentUser,
+      from: userName,
       text: chatInput.trim(),
       time: 'Now',
     }
@@ -189,6 +202,45 @@ function App() {
       ),
     )
     setChatInput('')
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="auth-wrap">
+        <section className="auth-card panel">
+          <div className="auth-hero">
+            <p className="eyebrow">TradeLoop Market</p>
+            <h1>Sign in to start trading</h1>
+            <p>
+              Connect with local traders, exchange products, and chat directly to negotiate the
+              perfect swap.
+            </p>
+          </div>
+
+          <form className="auth-form" onSubmit={handleSignIn}>
+            <label>
+              Full name
+              <input
+                type="text"
+                placeholder="e.g. Alex Morgan"
+                value={authName}
+                onChange={(event) => setAuthName(event.target.value)}
+              />
+            </label>
+            <label>
+              Email
+              <input
+                type="email"
+                placeholder="you@email.com"
+                value={authEmail}
+                onChange={(event) => setAuthEmail(event.target.value)}
+              />
+            </label>
+            <button type="submit">Enter Marketplace</button>
+          </form>
+        </section>
+      </div>
+    )
   }
 
   return (
@@ -281,10 +333,7 @@ function App() {
 
                 <div className="messages">
                   {activeChat.messages.map((message) => (
-                    <div
-                      className={`message ${message.from === currentUser ? 'mine' : ''}`}
-                      key={message.id}
-                    >
+                    <div className={`message ${message.from === userName ? 'mine' : ''}`} key={message.id}>
                       <p>{message.text}</p>
                       <small>
                         {message.from} · {message.time}

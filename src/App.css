@@ -13,6 +13,67 @@
   box-sizing: border-box;
 }
 
+.auth-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.auth-card {
+  width: min(920px, 100%);
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  overflow: hidden;
+}
+
+.auth-hero {
+  padding: 2rem;
+  background: radial-gradient(circle at 12% 15%, #ffe4c8 0, transparent 44%),
+    radial-gradient(circle at 88% 78%, #d0f0e5 0, transparent 42%), var(--surface);
+  border-right: 1px solid var(--line);
+}
+
+.auth-hero h1 {
+  margin: 0.25rem 0 0.5rem;
+  font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+}
+
+.auth-hero p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.auth-form {
+  padding: 2rem;
+  display: grid;
+  align-content: center;
+  gap: 0.9rem;
+  background: var(--surface);
+}
+
+.auth-form label {
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.auth-form input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.65rem 0.7rem;
+  font: inherit;
+}
+
+.auth-form button {
+  border: none;
+  border-radius: 11px;
+  padding: 0.7rem 0.75rem;
+  color: #fff;
+  background: linear-gradient(90deg, var(--accent), #6ca36b);
+}
+
 .trade-app {
   max-width: 1240px;
   margin: 0 auto;
@@ -149,7 +210,7 @@
   border-radius: 11px;
   padding: 0.58rem 0.72rem;
   color: #fff;
-  background: linear-gradient(90deg, var(--accent), #f18f41);
+  background: linear-gradient(90deg, var(--accent), #6ca36b);
 }
 
 .chat {
@@ -282,6 +343,15 @@ button {
 }
 
 @media (max-width: 1080px) {
+  .auth-card {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-hero {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+
   .layout {
     grid-template-columns: 1fr;
   }
@@ -299,6 +369,11 @@ button {
 @media (max-width: 700px) {
   .trade-app {
     padding: 1rem 0.7rem 2rem;
+  }
+
+  .auth-hero,
+  .auth-form {
+    padding: 1.2rem;
   }
 
   .offer-row {
