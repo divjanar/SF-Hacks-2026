@@ -23,19 +23,35 @@ function MarketplacePage({
   setChatInput,
   sendChatMessage,
   onOpenProfile,
+  onOpenSwipe,
+  userPlan,
+  swipesUsed,
+  freeSwipeLimit,
 }) {
   return (
     <div className="trade-app">
       <header className="hero">
         <div className="hero-top">
           <p className="eyebrow">Barter</p>
-          <button className="profile-button" type="button" onClick={onOpenProfile}>
-            <span className="profile-avatar" aria-hidden="true">
-              <svg viewBox="0 0 24 24" focusable="false">
-                <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.87 0-7 2.01-7 4.5V20h14v-1.5c0-2.49-3.13-4.5-7-4.5z" />
-              </svg>
-            </span>
-          </button>
+          <div className="hero-actions">
+            <button className="swap-mode-button" type="button" onClick={onOpenSwipe}>
+              Swap Mode
+            </button>
+            {userPlan === 'free' ? (
+              <p className="swipe-counter">
+                {swipesUsed}/{freeSwipeLimit} swaps used
+              </p>
+            ) : (
+              <p className="swipe-counter pro">Pro: unlimited swaps</p>
+            )}
+            <button className="profile-button" type="button" onClick={onOpenProfile}>
+              <span className="profile-avatar" aria-hidden="true">
+                <svg viewBox="0 0 24 24" focusable="false">
+                  <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-3.87 0-7 2.01-7 4.5V20h14v-1.5c0-2.49-3.13-4.5-7-4.5z" />
+                </svg>
+              </span>
+            </button>
+          </div>
         </div>
         <h1>Exchange products with people nearby</h1>
         <p>

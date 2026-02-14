@@ -8,6 +8,8 @@ function UserProfilePage({
   activeTradesCount,
   onBackToMarketplace,
   onSaveProfile,
+  currentPlan,
+  onUpgradeToPro,
   darkModeOn,
   onToggleDarkMode,
 }) {
@@ -20,7 +22,6 @@ function UserProfilePage({
   const [locationSharingOn, setLocationSharingOn] = useState(true)
   const [securityNotice, setSecurityNotice] = useState('')
   const [preferencesNotice, setPreferencesNotice] = useState('')
-  const [currentPlan] = useState('free')
   const [planNotice, setPlanNotice] = useState('')
   const [compactCardsOn, setCompactCardsOn] = useState(false)
   const [autoTranslateOn, setAutoTranslateOn] = useState(false)
@@ -302,7 +303,14 @@ function UserProfilePage({
                 <button
                   type="button"
                   className={`plan-card plan-card-pro ${currentPlan === 'pro' ? 'current' : ''}`}
-                  onClick={() => setPlanNotice('Pro upgrade flow opened. Add payment to continue.')}
+                  onClick={() => {
+                    if (currentPlan === 'pro') {
+                      setPlanNotice('You are already on Pro plan.')
+                      return
+                    }
+                    onUpgradeToPro()
+                    setPlanNotice('Pro plan activated. You now have unlimited swipes.')
+                  }}
                 >
                   <div className="plan-head">
                     <h3>
