@@ -6,8 +6,8 @@
 }
 
 .hero {
-  background: radial-gradient(circle at 12% 15%, #ffe4c8 0, transparent 44%),
-    radial-gradient(circle at 88% 78%, #d0f0e5 0, transparent 42%), var(--surface);
+  background: radial-gradient(circle at 12% 15%, #a9d6e5 0, transparent 44%),
+    radial-gradient(circle at 88% 78%, #468faf 0, transparent 42%), var(--surface);
   border: 1px solid var(--line);
   border-radius: 22px;
   padding: 1.8rem;
@@ -176,7 +176,7 @@
   border-radius: 11px;
   padding: 0.58rem 0.72rem;
   color: var(--on-accent);
-  background: linear-gradient(90deg, var(--accent), #f18f41);
+  background: linear-gradient(90deg, var(--accent), #a9d6e5);
   font: inherit;
   cursor: pointer;
 }
