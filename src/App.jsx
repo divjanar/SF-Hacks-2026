@@ -12,7 +12,7 @@ const tradeListings = [
     location: 'San Francisco',
     owner: 'Avery',
     wants: ['Mechanical keyboard', 'Steam gift card'],
-    accent: '#ffc95f',
+    accent: '#73a942',
   },
   {
     id: 2,
@@ -22,7 +22,7 @@ const tradeListings = [
     location: 'Oakland',
     owner: 'Mina',
     wants: ['Portable speaker', 'Vinyl records'],
-    accent: '#89f0e3',
+    accent: '#a3b18a',
   },
   {
     id: 3,
@@ -32,7 +32,7 @@ const tradeListings = [
     location: 'Berkeley',
     owner: 'Noah',
     wants: ['Studio microphone', 'Midi controller'],
-    accent: '#ff9f9f',
+    accent: '#73a942',
   },
   {
     id: 4,
@@ -42,7 +42,7 @@ const tradeListings = [
     location: 'San Jose',
     owner: 'Eli',
     wants: ['Ergonomic chair', 'Desk lamp'],
-    accent: '#a4c9ff',
+    accent: '#a3b18a',
   },
   {
     id: 5,
@@ -52,7 +52,7 @@ const tradeListings = [
     location: 'Daly City',
     owner: 'Sana',
     wants: ['Blender', 'Meal prep containers'],
-    accent: '#c4f58f',
+    accent: '#73a942',
   },
 ]
 
@@ -194,7 +194,7 @@ function App() {
   return (
     <div className="trade-app">
       <header className="hero">
-        <p className="eyebrow">TradeLoop Market</p>
+        <p className="eyebrow">Barter</p>
         <h1>Exchange products with people nearby</h1>
         <p>
           List what you have, show what you want, and negotiate directly through chat before
