@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import './App.css'
+import AuthPage from './AuthPage'
+import MarketplacePage from './MarketplacePage'
 
 const tradeListings = [
   {
@@ -10,7 +11,7 @@ const tradeListings = [
     location: 'San Francisco',
     owner: 'Avery',
     wants: ['Mechanical keyboard', 'Steam gift card'],
-    accent: '#ffc95f',
+    accent: '#73a942',
   },
   {
     id: 2,
@@ -20,7 +21,7 @@ const tradeListings = [
     location: 'Oakland',
     owner: 'Mina',
     wants: ['Portable speaker', 'Vinyl records'],
-    accent: '#89f0e3',
+    accent: '#a3b18a',
   },
   {
     id: 3,
@@ -30,7 +31,7 @@ const tradeListings = [
     location: 'Berkeley',
     owner: 'Noah',
     wants: ['Studio microphone', 'Midi controller'],
-    accent: '#ff9f9f',
+    accent: '#73a942',
   },
   {
     id: 4,
@@ -40,7 +41,7 @@ const tradeListings = [
     location: 'San Jose',
     owner: 'Eli',
     wants: ['Ergonomic chair', 'Desk lamp'],
-    accent: '#a4c9ff',
+    accent: '#a3b18a',
   },
   {
     id: 5,
@@ -50,7 +51,7 @@ const tradeListings = [
     location: 'Daly City',
     owner: 'Sana',
     wants: ['Blender', 'Meal prep containers'],
-    accent: '#c4f58f',
+    accent: '#73a942',
   },
 ]
 
@@ -83,6 +84,11 @@ const getSeededChats = (currentUser) => [
     ],
   },
 ]
+
+const getNextChatId = (chatList) => chatList.reduce((max, chat) => Math.max(max, chat.id), 0) + 1
+
+const getNextMessageId = (messageList) =>
+  messageList.reduce((max, message) => Math.max(max, message.id), 0) + 1
 
 function App() {
   const [isSignedIn, setIsSignedIn] = useState(false)
@@ -186,7 +192,7 @@ function App() {
       return
     }
 
-    const newChatId = Date.now()
+    const newChatId = getNextChatId(chats)
     const newChat = {
       id: newChatId,
       peer: listing.owner,
@@ -212,7 +218,7 @@ function App() {
     }
 
     const newMessage = {
-      id: Date.now(),
+      id: getNextMessageId(activeChat.messages),
       from: userName,
       text: `Trade offer: ${offerItem}. Note: ${offerMessage.trim()}`,
       time: 'Now',
@@ -238,7 +244,7 @@ function App() {
     }
 
     const outgoing = {
-      id: Date.now(),
+      id: getNextMessageId(activeChat.messages),
       from: userName,
       text: chatInput.trim(),
       time: 'Now',
@@ -259,243 +265,48 @@ function App() {
 
   if (!isSignedIn) {
     return (
-      <div className="auth-wrap">
-        <section className="auth-card panel">
-          <div className="auth-hero">
-            <p className="eyebrow">TradeLoop Market</p>
-            <h1>{authMode === 'signin' ? 'Sign in to start trading' : 'Create your trader account'}</h1>
-            <p>
-              Connect with local traders, exchange products, and chat directly to negotiate the
-              perfect swap.
-            </p>
-          </div>
-
-          <div className="auth-form-wrap">
-            <div className="auth-tabs">
-              <button
-                type="button"
-                className={authMode === 'signin' ? 'active' : ''}
-                onClick={() => switchAuthMode('signin')}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                className={authMode === 'signup' ? 'active' : ''}
-                onClick={() => switchAuthMode('signup')}
-              >
-                Create Account
-              </button>
-            </div>
-
-            {authMode === 'signin' ? (
-              <form className="auth-form" onSubmit={handleSignIn}>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    placeholder="you@email.com"
-                    value={authEmail}
-                    onChange={(event) => setAuthEmail(event.target.value)}
-                  />
-                </label>
-                <label>
-                  Password
-                  <input
-                    type="password"
-                    placeholder="Enter password"
-                    value={authPassword}
-                    onChange={(event) => setAuthPassword(event.target.value)}
-                  />
-                </label>
-                {authError && <p className="auth-message">{authError}</p>}
-                <button type="submit">Enter Marketplace</button>
-                <p className="auth-hint">Demo account: demo@tradeloop.com / demo1234</p>
-              </form>
-            ) : (
-              <form className="auth-form" onSubmit={handleCreateAccount}>
-                <label>
-                  Full name
-                  <input
-                    type="text"
-                    placeholder="e.g. Alex Morgan"
-                    value={authName}
-                    onChange={(event) => setAuthName(event.target.value)}
-                  />
-                </label>
-                <label>
-                  Email
-                  <input
-                    type="email"
-                    placeholder="you@email.com"
-                    value={authEmail}
-                    onChange={(event) => setAuthEmail(event.target.value)}
-                  />
-                </label>
-                <label>
-                  Password
-                  <input
-                    type="password"
-                    placeholder="At least 6 characters"
-                    value={authPassword}
-                    onChange={(event) => setAuthPassword(event.target.value)}
-                  />
-                </label>
-                <label>
-                  Confirm password
-                  <input
-                    type="password"
-                    placeholder="Re-enter password"
-                    value={confirmPassword}
-                    onChange={(event) => setConfirmPassword(event.target.value)}
-                  />
-                </label>
-                {authError && <p className="auth-message">{authError}</p>}
-                <button type="submit">Create Account</button>
-              </form>
-            )}
-          </div>
-        </section>
-      </div>
+      <AuthPage
+        authMode={authMode}
+        switchAuthMode={switchAuthMode}
+        handleSignIn={handleSignIn}
+        handleCreateAccount={handleCreateAccount}
+        authName={authName}
+        setAuthName={setAuthName}
+        authEmail={authEmail}
+        setAuthEmail={setAuthEmail}
+        authPassword={authPassword}
+        setAuthPassword={setAuthPassword}
+        confirmPassword={confirmPassword}
+        setConfirmPassword={setConfirmPassword}
+        authError={authError}
+      />
     )
   }
 
   return (
-    <div className="trade-app">
-      <header className="hero">
-        <p className="eyebrow">TradeLoop Market</p>
-        <h1>Exchange products with people nearby</h1>
-        <p>
-          List what you have, show what you want, and negotiate directly through chat before
-          meeting.
-        </p>
-      </header>
-
-      <main className="layout">
-        <section className="marketplace panel">
-          <div className="panel-header">
-            <h2>Available Trades</h2>
-            <div className="filter-row">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  className={`chip ${categoryFilter === category ? 'active' : ''}`}
-                  onClick={() => setCategoryFilter(category)}
-                  type="button"
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="listing-grid">
-            {visibleListings.map((listing) => (
-              <article className="listing-card" key={listing.id}>
-                <div className="listing-banner" style={{ backgroundColor: listing.accent }}>
-                  <span>{listing.category}</span>
-                </div>
-                <div className="listing-content">
-                  <h3>{listing.title}</h3>
-                  <p>
-                    <strong>Owner:</strong> {listing.owner}
-                  </p>
-                  <p>
-                    <strong>Condition:</strong> {listing.condition}
-                  </p>
-                  <p>
-                    <strong>Location:</strong> {listing.location}
-                  </p>
-                  <p>
-                    <strong>Wants:</strong> {listing.wants.join(', ')}
-                  </p>
-                  <button type="button" onClick={() => startTradeChat(listing)}>
-                    Start Chat for Trade
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
-        </section>
-
-        <section className="chat panel">
-          <div className="chat-sidebar">
-            <h2>Chats</h2>
-            <ul>
-              {chats.map((chat) => {
-                const listing = listings.find((item) => item.id === chat.listingId)
-                return (
-                  <li key={chat.id}>
-                    <button
-                      className={`chat-thread ${activeChatId === chat.id ? 'selected' : ''}`}
-                      onClick={() => setActiveChatId(chat.id)}
-                      type="button"
-                    >
-                      <span>{chat.peer}</span>
-                      <small>{listing?.title}</small>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
-
-          <div className="chat-main">
-            {activeChat ? (
-              <>
-                <div className="chat-header">
-                  <h3>Trade with {activeChat.peer}</h3>
-                  <p>{activeListing?.title}</p>
-                </div>
-
-                <div className="messages">
-                  {activeChat.messages.map((message) => (
-                    <div className={`message ${message.from === userName ? 'mine' : ''}`} key={message.id}>
-                      <p>{message.text}</p>
-                      <small>
-                        {message.from} · {message.time}
-                      </small>
-                    </div>
-                  ))}
-                </div>
-
-                <form className="offer-form" onSubmit={sendTradeOffer}>
-                  <h4>Send trade offer</h4>
-                  <div className="offer-row">
-                    <select value={offerItem} onChange={(event) => setOfferItem(event.target.value)}>
-                      {myInventory.map((item) => (
-                        <option key={item} value={item}>
-                          {item}
-                        </option>
-                      ))}
-                    </select>
-                    <input
-                      type="text"
-                      placeholder="Add a short trade note"
-                      value={offerMessage}
-                      onChange={(event) => setOfferMessage(event.target.value)}
-                    />
-                    <button type="submit">Offer</button>
-                  </div>
-                </form>
-
-                <form className="chat-input" onSubmit={sendChatMessage}>
-                  <input
-                    type="text"
-                    placeholder="Write a message"
-                    value={chatInput}
-                    onChange={(event) => setChatInput(event.target.value)}
-                  />
-                  <button type="submit">Send</button>
-                </form>
-              </>
-            ) : (
-              <p>Select a listing and start a trade chat.</p>
-            )}
-          </div>
-        </section>
-      </main>
-    </div>
+    <MarketplacePage
+      categories={categories}
+      categoryFilter={categoryFilter}
+      setCategoryFilter={setCategoryFilter}
+      visibleListings={visibleListings}
+      startTradeChat={startTradeChat}
+      chats={chats}
+      listings={listings}
+      activeChatId={activeChatId}
+      setActiveChatId={setActiveChatId}
+      activeChat={activeChat}
+      activeListing={activeListing}
+      userName={userName}
+      myInventory={myInventory}
+      offerItem={offerItem}
+      setOfferItem={setOfferItem}
+      offerMessage={offerMessage}
+      setOfferMessage={setOfferMessage}
+      sendTradeOffer={sendTradeOffer}
+      chatInput={chatInput}
+      setChatInput={setChatInput}
+      sendChatMessage={sendChatMessage}
+    />
   )
 }
 
