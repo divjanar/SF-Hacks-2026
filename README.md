@@ -1,16 +1,42 @@
-# React + Vite
+# 🔄 Barter
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Barter is a trading marketplace app where users exchange items instead of buying them.  
+No money involved — just fair trades between people.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📌 Overview
 
-## React Compiler
+Barter allows users to:
+- List items they want to trade
+- Browse other users’ listings
+- Chat with other users
+- Propose and negotiate trades
+- Exchange items securely and sustainably
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The goal is to promote sustainability, reduce waste, and encourage community-based exchanges.
 
-## Expanding the ESLint configuration
+---
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🚀 Features
+
+- 📦 Create trade listings
+- 🔎 Browse available items
+- 💬 Built-in chat system
+- 👤 User-based accounts
+- 📍 Item condition, category, and location display
+- 🤝 Trade proposal system
+
+---
+
+## 🛠 Tech Stack
+
+- **Frontend:** React (JSX)
+- **Styling:** CSS
+- **Build Tool:** Vite
+- **Version Control:** Git & GitHub
+
+---
+
+## 📂 Project Structure
+
