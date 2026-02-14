@@ -64,7 +64,8 @@ function MarketplacePage({
   const wheelDeltaXRef = useRef(0)
   const lastWheelSwipeAtRef = useRef(0)
   const hasPostedItems = myInventory.length > 0
-  const swipeListings = visibleListings.length ? visibleListings : listings
+  const swipeSource = visibleListings.length ? visibleListings : listings
+  const swipeListings = swipeSource.filter((listing) => listing.owner !== userName)
   const currentSwipeListing = swipeListings[currentSwipeIndex % Math.max(swipeListings.length, 1)]
   const freeLimitReached = userPlan === 'free' && swipesUsed >= freeSwipeLimit
 
