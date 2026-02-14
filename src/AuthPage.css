@@ -58,7 +58,7 @@
 
 .auth-tabs button {
   border: 0;
-  background: #f8f2e8;
+  background: var(--soft-fill);
   color: var(--ink);
   padding: 0.65rem 0.7rem;
   font-weight: 600;
@@ -68,7 +68,7 @@
 
 .auth-tabs button.active {
   background: linear-gradient(90deg, var(--accent), #6ca36b);
-  color: #fff;
+  color: var(--on-accent);
 }
 
 .auth-form {
@@ -92,7 +92,7 @@
 
 .auth-message {
   margin: 0;
-  color: #7a2f2a;
+  color: var(--error);
   font-size: 0.86rem;
 }
 
@@ -106,7 +106,7 @@
   border: none;
   border-radius: 11px;
   padding: 0.7rem 0.75rem;
-  color: #fff;
+  color: var(--on-accent);
   background: linear-gradient(90deg, var(--accent), #6ca36b);
   font: inherit;
   cursor: pointer;

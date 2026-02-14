@@ -33,6 +33,45 @@
   color: var(--muted);
 }
 
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.profile-button {
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  color: var(--ink);
+  border-radius: 999px;
+  padding: 0.28rem;
+  font: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.profile-button:hover {
+  border-color: var(--accent);
+}
+
+.profile-avatar {
+  width: 1.8rem;
+  height: 1.8rem;
+  border-radius: 50%;
+  background: linear-gradient(120deg, var(--accent), #86b86e);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  fill: var(--on-accent);
+}
+
 .layout {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -71,7 +110,7 @@
 
 .chip {
   border: 1px solid var(--line);
-  background: #fff;
+  background: var(--surface-2);
   color: var(--ink);
   border-radius: 999px;
   padding: 0.38rem 0.8rem;
@@ -81,7 +120,7 @@
 
 .chip.active {
   background: var(--accent);
-  color: #fff;
+  color: var(--on-accent);
   border-color: var(--accent);
 }
 
@@ -95,7 +134,7 @@
   border: 1px solid var(--line);
   border-radius: 15px;
   overflow: hidden;
-  background: #fff;
+  background: var(--surface-2);
 }
 
 .listing-banner {
@@ -107,7 +146,7 @@
 
 .listing-banner span {
   background: rgba(0, 0, 0, 0.24);
-  color: #fff;
+  color: var(--on-accent);
   font-size: 0.78rem;
   padding: 0.2rem 0.52rem;
   border-radius: 999px;
@@ -136,7 +175,7 @@
   border: none;
   border-radius: 11px;
   padding: 0.58rem 0.72rem;
-  color: #fff;
+  color: var(--on-accent);
   background: linear-gradient(90deg, var(--accent), #f18f41);
   font: inherit;
   cursor: pointer;
@@ -164,7 +203,7 @@
 .chat-thread {
   width: 100%;
   text-align: left;
-  background: #fff;
+  background: var(--surface-2);
   border: 1px solid var(--line);
   border-radius: 11px;
   padding: 0.62rem;
@@ -181,7 +220,7 @@
 
 .chat-thread.selected {
   border-color: var(--accent-2);
-  background: #eef9f6;
+  background: var(--mine-fill);
 }
 
 .chat-main {
@@ -203,22 +242,22 @@
   padding: 0.8rem;
   overflow: auto;
   max-height: 300px;
-  background: linear-gradient(180deg, #fffcf8, #fff);
+  background: linear-gradient(180deg, var(--chat-grad-start), var(--chat-grad-end));
 }
 
 .message {
   max-width: 90%;
   padding: 0.64rem;
   border-radius: 10px;
-  background: #fff;
+  background: var(--surface-2);
   border: 1px solid var(--line);
   margin-bottom: 0.55rem;
 }
 
 .message.mine {
   margin-left: auto;
-  background: #eef9f6;
-  border-color: #b9e6d9;
+  background: var(--mine-fill);
+  border-color: var(--mine-border);
 }
 
 .message p {
@@ -237,7 +276,7 @@
   border: 1px solid var(--line);
   border-radius: 12px;
   padding: 0.7rem;
-  background: #fff;
+  background: var(--surface-2);
 }
 
 .offer-row {
@@ -286,6 +325,11 @@
 @media (max-width: 700px) {
   .trade-app {
     padding: 1rem 0.7rem 2rem;
+  }
+
+  .hero-top {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .offer-row {

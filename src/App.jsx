@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import AuthPage from './AuthPage'
 import MarketplacePage from './MarketplacePage'
+import UserProfilePage from './UserProfilePage'
 
 const tradeListings = [
   {
@@ -91,6 +92,7 @@ const getNextMessageId = (messageList) =>
   messageList.reduce((max, message) => Math.max(max, message.id), 0) + 1
 
 function App() {
+  const [darkModeOn, setDarkModeOn] = useState(() => localStorage.getItem('darkMode') === 'on')
   const [isSignedIn, setIsSignedIn] = useState(false)
   const [authMode, setAuthMode] = useState('signin')
   const [accounts, setAccounts] = useState([
@@ -102,6 +104,8 @@ function App() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [authError, setAuthError] = useState('')
   const [userName, setUserName] = useState('You')
+  const [userEmail, setUserEmail] = useState('demo@tradeloop.com')
+  const [activePage, setActivePage] = useState('marketplace')
 
   const [categoryFilter, setCategoryFilter] = useState('All')
   const [listings] = useState(tradeListings)
@@ -110,6 +114,11 @@ function App() {
   const [offerItem, setOfferItem] = useState(myInventory[0])
   const [offerMessage, setOfferMessage] = useState('')
   const [chatInput, setChatInput] = useState('')
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('theme-dark', darkModeOn)
+    localStorage.setItem('darkMode', darkModeOn ? 'on' : 'off')
+  }, [darkModeOn])
 
   const categories = useMemo(
     () => ['All', ...new Set(listings.map((listing) => listing.category))],
@@ -142,8 +151,10 @@ function App() {
     }
 
     setUserName(account.name || 'You')
+    setUserEmail(account.email || 'demo@tradeloop.com')
     setChats(getSeededChats(account.name || 'You'))
     setActiveChatId(101)
+    setActivePage('marketplace')
     setAuthError('')
     setIsSignedIn(true)
   }
@@ -263,6 +274,19 @@ function App() {
     setChatInput('')
   }
 
+  const openUserProfile = () => {
+    setActivePage('profile')
+  }
+
+  const backToMarketplace = () => {
+    setActivePage('marketplace')
+  }
+
+  const saveUserProfile = ({ name, email }) => {
+    setUserName(name)
+    setUserEmail(email)
+  }
+
   if (!isSignedIn) {
     return (
       <AuthPage
@@ -279,6 +303,21 @@ function App() {
         confirmPassword={confirmPassword}
         setConfirmPassword={setConfirmPassword}
         authError={authError}
+      />
+    )
+  }
+
+  if (activePage === 'profile') {
+    return (
+      <UserProfilePage
+        userName={userName}
+        userEmail={userEmail}
+        chatsCount={chats.length}
+        activeTradesCount={listings.length}
+        onBackToMarketplace={backToMarketplace}
+        onSaveProfile={saveUserProfile}
+        darkModeOn={darkModeOn}
+        onToggleDarkMode={() => setDarkModeOn((prev) => !prev)}
       />
     )
   }
@@ -306,6 +345,7 @@ function App() {
       chatInput={chatInput}
       setChatInput={setChatInput}
       sendChatMessage={sendChatMessage}
+      onOpenProfile={openUserProfile}
     />
   )
 }
